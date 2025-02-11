@@ -54,88 +54,190 @@ const GiftList = () => {
   }, []);
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '1rem' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        <div style={{ border: '1px solid #ccc', padding: '1rem', borderRadius: '4px' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>Presentes Disponíveis</h2>
-          {availableGifts.map(gift => (
-            <div 
-              key={gift.id}
-              style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                padding: '0.5rem',
-                marginBottom: '0.5rem',
-                border: '1px solid #eee',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-              onClick={() => selectGift(gift)}
-            >
-              <span>{gift.name}</span>
-              <button style={{ 
-                background: '#3b82f6', 
-                color: 'white', 
-                padding: '0.5rem 1rem', 
-                borderRadius: '4px',
-                border: 'none',
-                cursor: 'pointer'
-              }}>
-                Selecionar
-              </button>
-            </div>
-          ))}
-        </div>
+    <div style={{ 
+      maxWidth: '1200px', 
+      margin: '0 auto', 
+      padding: '1rem',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <h1 style={{
+        textAlign: 'center',
+        fontSize: '2rem',
+        color: '#333',
+        marginBottom: '2rem'
+      }}>
+        Lista de Presentes
+      </h1>
 
-        <div style={{ border: '1px solid #ccc', padding: '1rem', borderRadius: '4px' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>Meus Presentes</h2>
-          {selectedGifts.map(gift => (
-            <div 
-              key={gift.id}
-              style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                padding: '0.5rem',
-                marginBottom: '0.5rem',
-                border: '1px solid #eee',
-                borderRadius: '4px'
-              }}
-            >
-              <span>{gift.name}</span>
-              <div>
-                <a 
-                  href={gift.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    background: '#22c55e',
-                    color: 'white',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '4px',
-                    textDecoration: 'none',
-                    marginRight: '0.5rem'
-                  }}
-                >
-                  Comprar
-                </a>
-                <button 
-                  onClick={() => returnGift(gift)}
-                  style={{
-                    background: '#ef4444',
-                    color: 'white',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '4px',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Devolver
+      <div style={{ 
+        display: 'grid',
+        gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : '1fr 1fr',
+        gap: '2rem'
+      }}>
+        {/* Lista de Disponíveis */}
+        <div style={{ 
+          backgroundColor: '#fff',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          padding: '1.5rem',
+          height: 'fit-content'
+        }}>
+          <h2 style={{ 
+            fontSize: '1.5rem', 
+            fontWeight: 'bold',
+            color: '#2563eb',
+            marginBottom: '1.5rem',
+            textAlign: 'center'
+          }}>
+            Presentes Disponíveis
+          </h2>
+          
+          <div style={{
+            display: 'grid',
+            gap: '1rem',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+            padding: '0.5rem'
+          }}>
+            {availableGifts.map(gift => (
+              <div 
+                key={gift.id}
+                style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  padding: '1rem',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '6px',
+                  transition: 'all 0.2s',
+                  cursor: 'pointer',
+                  border: '1px solid #e2e8f0',
+                  ':hover': {
+                    backgroundColor: '#f1f5f9',
+                    transform: 'translateY(-2px)'
+                  }
+                }}
+                onClick={() => selectGift(gift)}
+              >
+                <span style={{ fontSize: '1rem', color: '#334155' }}>{gift.name}</span>
+                <button style={{ 
+                  background: '#3b82f6',
+                  color: 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  transition: 'background 0.2s',
+                  ':hover': {
+                    background: '#2563eb'
+                  }
+                }}>
+                  Selecionar
                 </button>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        {/* Lista de Selecionados */}
+        <div style={{ 
+          backgroundColor: '#fff',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          padding: '1.5rem',
+          height: 'fit-content'
+        }}>
+          <h2 style={{ 
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            color: '#059669',
+            marginBottom: '1.5rem',
+            textAlign: 'center'
+          }}>
+            Meus Presentes
+          </h2>
+
+          <div style={{
+            display: 'grid',
+            gap: '1rem',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+            padding: '0.5rem'
+          }}>
+            {selectedGifts.map(gift => (
+              <div 
+                key={gift.id}
+                style={{ 
+                  display: 'flex', 
+                  flexDirection: window.innerWidth <= 480 ? 'column' : 'row',
+                  justifyContent: 'space-between',
+                  alignItems: window.innerWidth <= 480 ? 'stretch' : 'center',
+                  gap: window.innerWidth <= 480 ? '0.5rem' : '0',
+                  padding: '1rem',
+                  backgroundColor: '#f0fdf4',
+                  borderRadius: '6px',
+                  border: '1px solid #dcfce7'
+                }}
+              >
+                <span style={{ 
+                  fontSize: '1rem',
+                  color: '#334155',
+                  marginBottom: window.innerWidth <= 480 ? '0.5rem' : '0'
+                }}>
+                  {gift.name}
+                </span>
+                
+                <div style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                  flexDirection: window.innerWidth <= 480 ? 'column' : 'row'
+                }}>
+                  <a 
+                    href={gift.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: '#22c55e',
+                      color: 'white',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      textAlign: 'center',
+                      fontWeight: '500',
+                      transition: 'background 0.2s',
+                      ':hover': {
+                        background: '#16a34a'
+                      }
+                    }}
+                  >
+                    Comprar
+                  </a>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      returnGift(gift);
+                    }}
+                    style={{
+                      background: '#ef4444',
+                      color: 'white',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                      transition: 'background 0.2s',
+                      ':hover': {
+                        background: '#dc2626'
+                      }
+                    }}
+                  >
+                    Devolver
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
