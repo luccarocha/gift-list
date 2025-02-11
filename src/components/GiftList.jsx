@@ -44,7 +44,7 @@ const GiftList = () => {
   };
 
   const returnGift = (gift) => {
-    const updatedAvailable = [...availableGifts, gift];
+    const updatedAvailable = [...availableGifts, gift].sort((a, b) => a.id - b.id);
     const updatedSelected = selectedGifts.filter(g => g.id !== gift.id);
     
     setAvailableGifts(updatedAvailable);
@@ -193,63 +193,65 @@ const GiftList = () => {
                 </div>
               ))}
             </div>
-        )}
-        <div style={{ 
-          backgroundColor: '#fff',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          padding: '1.5rem',
-          height: 'fit-content'
+          )}
+        </div>
+      )}
+
+      <div style={{ 
+        backgroundColor: '#fff',
+        borderRadius: '8px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        padding: '1.5rem',
+        height: 'fit-content'
+      }}>
+        <h2 style={{ 
+          fontSize: '1.5rem', 
+          fontWeight: 'bold',
+          color: '#2563eb',
+          marginBottom: '1.5rem',
+          textAlign: 'center'
         }}>
-          <h2 style={{ 
-            fontSize: '1.5rem', 
-            fontWeight: 'bold',
-            color: '#2563eb',
-            marginBottom: '1.5rem',
-            textAlign: 'center'
-          }}>
-            Presentes Disponíveis
-          </h2>
-          
-          <div style={{
-            display: 'grid',
-            gap: '1rem',
-            maxHeight: '70vh',
-            overflowY: 'auto',
-            padding: '0.5rem'
-          }}>
-            {availableGifts.map(gift => (
-              <div 
-                key={gift.id}
-                style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  padding: '1rem',
-                  backgroundColor: '#f8fafc',
-                  borderRadius: '6px',
-                  transition: 'all 0.2s',
-                  cursor: 'pointer',
-                  border: '1px solid #e2e8f0'
-                }}
-                onClick={() => selectGift(gift)}
-              >
-                <span style={{ fontSize: '1rem', color: '#334155' }}>{gift.name}</span>
-                <button style={{ 
-                  background: '#3b82f6',
-                  color: 'white',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '6px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: '500',
-                  transition: 'background 0.2s'
-                }}>
-                  Selecionar
-                </button>
-              </div>
-            ))}
-          </div>
+          Presentes Disponíveis
+        </h2>
+        
+        <div style={{
+          display: 'grid',
+          gap: '1rem',
+          maxHeight: '70vh',
+          overflowY: 'auto',
+          padding: '0.5rem'
+        }}>
+          {availableGifts.map(gift => (
+            <div 
+              key={gift.id}
+              style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                padding: '1rem',
+                backgroundColor: '#f8fafc',
+                borderRadius: '6px',
+                transition: 'all 0.2s',
+                cursor: 'pointer',
+                border: '1px solid #e2e8f0'
+              }}
+              onClick={() => selectGift(gift)}
+            >
+              <span style={{ fontSize: '1rem', color: '#334155' }}>{gift.name}</span>
+              <button style={{ 
+                background: '#3b82f6',
+                color: 'white',
+                padding: '0.5rem 1rem',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: '500',
+                transition: 'background 0.2s'
+              }}>
+                Selecionar
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>
