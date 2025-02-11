@@ -3,8 +3,7 @@ import { useState, useEffect } from 'react';
 const GiftList = () => {
   const [selectedGifts, setSelectedGifts] = useState([]);
   const [showSelected, setShowSelected] = useState(false);
-  const [availableGifts, setAvailableGifts] = useState([
-    { id: 1, name: 'Assadeiras', link: 'https://www.magazinevoce.com.br/magazineluccastorels/jogo-4-formas-assadeiras-retangulares-aluminio-p-bolos-e-tortas-postagem-rapida-mba/p/hhfghh5j8e/ud/fabo/' },
+  const [availableGifts, setAvailableGifts] = useState([    { id: 1, name: 'Assadeiras', link: 'https://www.magazinevoce.com.br/magazineluccastorels/jogo-4-formas-assadeiras-retangulares-aluminio-p-bolos-e-tortas-postagem-rapida-mba/p/hhfghh5j8e/ud/fabo/' },
     { id: 2, name: 'Batedeira', link: 'https://www.magazinevoce.com.br/magazineluccastorels/batedeira-britania-diamante-inox-turbo-550w-preta/p/ag97b59j57/ep/btdc/' },
     { id: 3, name: 'Cafeteira', link: 'https://www.magazinevoce.com.br/magazineluccastorels/cafeteira-eletrica-electrolux-efficient-ecm10-15-cafes-preto-e-granite-gray/p/231236700/ep/otep/' },
     { id: 4, name: 'Chaleira Elétrica', link: 'https://www.magazinevoce.com.br/magazineluccastorels/jarra-eletrica-bule-chaleira-inox-18-litros-amanzi-fix-110v-preta-inox-prime/p/cdb6jhc22a/ep/clre/' },
@@ -32,89 +31,49 @@ const GiftList = () => {
     { id: 26, name: 'Varal Retrátil', link: 'https://www.magazinevoce.com.br/magazineluccastorels/varal-de-chao-com-abas-retratil-roupas-intimas-apartamento-articulado-mini-aco-branco-portatil-preto-home-utilities/p/cd7aab54k9/ud/vral/' }
   ]);
 
-  useEffect(() => {
-    const request = indexedDB.open('giftList', 1);
-    
-    request.onerror = (event) => {
-      console.error("Database error:", event.target.error);
-    };
-
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains('gifts')) {
-        db.createObjectStore('gifts', { keyPath: 'id' });
-      }
-    };
-
-    request.onsuccess = (event) => {
-      const db = event.target.result;
-      const transaction = db.transaction(['gifts'], 'readwrite');
-      const store = transaction.objectStore('gifts');
-      
-      availableGifts.forEach(gift => {
-        store.put({...gift, selected: false});
-      });
-    };
-  }, []);
+  const giftChannel = new BroadcastChannel('gifts');
 
   const selectGift = (gift) => {
-    const request = indexedDB.open('giftList', 1);
+    const updatedSelected = [...selectedGifts, gift];
+    const updatedAvailable = availableGifts.filter(g => g.id !== gift.id);
     
-    request.onsuccess = (event) => {
-      const db = event.target.result;
-      const transaction = db.transaction(['gifts'], 'readwrite');
-      const store = transaction.objectStore('gifts');
-      
-      store.put({...gift, selected: true});
-      
-      setSelectedGifts([...selectedGifts, gift]);
-      setAvailableGifts(availableGifts.filter(g => g.id !== gift.id));
-    };
+    setSelectedGifts(updatedSelected);
+    setAvailableGifts(updatedAvailable);
+    
+    giftChannel.postMessage({
+      type: 'select',
+      gift,
+      availableGifts: updatedAvailable,
+      selectedGifts: updatedSelected
+    });
   };
 
   const returnGift = (gift) => {
-    const request = indexedDB.open('giftList', 1);
+    const updatedAvailable = [...availableGifts, gift].sort((a, b) => a.id - b.id);
+    const updatedSelected = selectedGifts.filter(g => g.id !== gift.id);
     
-    request.onsuccess = (event) => {
-      const db = event.target.result;
-      const transaction = db.transaction(['gifts'], 'readwrite');
-      const store = transaction.objectStore('gifts');
-      
-      store.put({...gift, selected: false});
-      
-      setAvailableGifts([...availableGifts, gift].sort((a, b) => a.id - b.id));
-      setSelectedGifts(selectedGifts.filter(g => g.id !== gift.id));
-    };
+    setAvailableGifts(updatedAvailable);
+    setSelectedGifts(updatedSelected);
+    
+    giftChannel.postMessage({
+      type: 'return',
+      gift,
+      availableGifts: updatedAvailable,
+      selectedGifts: updatedSelected
+    });
   };
 
   useEffect(() => {
-    const checkForUpdates = () => {
-      const request = indexedDB.open('giftList', 1);
-      
-      request.onsuccess = (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction(['gifts'], 'readonly');
-        const store = transaction.objectStore('gifts');
-        const getAll = store.getAll();
-        
-        getAll.onsuccess = () => {
-          const gifts = getAll.result;
-          const available = gifts.filter(g => !g.selected);
-          const selected = gifts.filter(g => g.selected);
-          
-          if (JSON.stringify(available) !== JSON.stringify(availableGifts)) {
-            setAvailableGifts(available);
-          }
-          if (JSON.stringify(selected) !== JSON.stringify(selectedGifts)) {
-            setSelectedGifts(selected);
-          }
-        };
-      };
+    giftChannel.onmessage = (event) => {
+      const { type, availableGifts: newAvailable, selectedGifts: newSelected } = event.data;
+      if (type === 'select' || type === 'return') {
+        setAvailableGifts(newAvailable);
+        setSelectedGifts(newSelected);
+      }
     };
 
-    const interval = setInterval(checkForUpdates, 500);
-    return () => clearInterval(interval);
-  }, [availableGifts, selectedGifts]);
+    return () => giftChannel.close();
+  }, []);
 
   return (
     <div style={{ 
