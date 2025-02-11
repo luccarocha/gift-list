@@ -1,12 +1,12 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-
 import GiftList from './components/GiftList'
 
 function App() {
-  return <GiftList />
+  return (
+    <div>
+      <h1>Lista de Presentes</h1>
+      <GiftList />
+    </div>
+  )
 }
 
 export default App
