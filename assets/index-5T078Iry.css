@@ -1,0 +1,1 @@
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.border{border:1px solid #ccc;padding:1rem;border-radius:4px}button{padding:.5rem 1rem;border-radius:4px;cursor:pointer}.bg-blue-500{background:#3b82f6;color:#fff}.bg-green-500{background:#22c55e;color:#fff}.bg-red-500{background:#ef4444;color:#fff}
