@@ -54,6 +54,7 @@ const GiftList = () => {
     localStorage.setItem('selectedGifts', JSON.stringify(updatedSelected));
   };
 
+  // Load initial data
   useEffect(() => {
     const savedSelected = localStorage.getItem('selectedGifts');
     const savedAvailable = localStorage.getItem('availableGifts');
@@ -67,21 +68,29 @@ const GiftList = () => {
     }
   }, []);
 
+  // Poll for changes
   useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === 'availableGifts') {
-        const available = JSON.parse(e.newValue || '[]');
-        setAvailableGifts(available);
+    const interval = setInterval(() => {
+      const currentAvailable = localStorage.getItem('availableGifts');
+      const currentSelected = localStorage.getItem('selectedGifts');
+      
+      if (currentAvailable) {
+        const parsedAvailable = JSON.parse(currentAvailable);
+        if (JSON.stringify(parsedAvailable) !== JSON.stringify(availableGifts)) {
+          setAvailableGifts(parsedAvailable);
+        }
       }
-      if (e.key === 'selectedGifts') {
-        const selected = JSON.parse(e.newValue || '[]');
-        setSelectedGifts(selected);
+      
+      if (currentSelected) {
+        const parsedSelected = JSON.parse(currentSelected);
+        if (JSON.stringify(parsedSelected) !== JSON.stringify(selectedGifts)) {
+          setSelectedGifts(parsedSelected);
+        }
       }
-    };
+    }, 1000); // Check every second
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    return () => clearInterval(interval);
+  }, [availableGifts, selectedGifts]);
 
   return (
     <div style={{ 
@@ -179,8 +188,7 @@ const GiftList = () => {
                       style={{
                         background: '#ef4444',
                         color: 'white',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '6px',
+                        padding: '0.5rem 1rem',borderRadius: '6px',
                         border: 'none',
                         cursor: 'pointer',
                         fontWeight: '500',
