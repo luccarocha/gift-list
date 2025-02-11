@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 
 const GiftList = () => {
-  const [showSelected, setShowSelected] = useState(false);
   const [selectedGifts, setSelectedGifts] = useState([]);
+  const [showSelected, setShowSelected] = useState(false);
   const [availableGifts, setAvailableGifts] = useState([
     { id: 1, name: 'Assadeiras', link: 'https://www.magazinevoce.com.br/magazineluccastorels/jogo-4-formas-assadeiras-retangulares-aluminio-p-bolos-e-tortas-postagem-rapida-mba/p/hhfghh5j8e/ud/fabo/' },
     { id: 2, name: 'Batedeira', link: 'https://www.magazinevoce.com.br/magazineluccastorels/batedeira-britania-diamante-inox-turbo-550w-preta/p/ag97b59j57/ep/btdc/' },
@@ -33,17 +33,25 @@ const GiftList = () => {
   ]);
 
   const selectGift = (gift) => {
-    setSelectedGifts([...selectedGifts, gift]);
-    setAvailableGifts(availableGifts.filter(g => g.id !== gift.id));
-    localStorage.setItem('selectedGifts', JSON.stringify([...selectedGifts, gift]));
-    localStorage.setItem('availableGifts', JSON.stringify(availableGifts.filter(g => g.id !== gift.id)));
+    const updatedSelected = [...selectedGifts, gift];
+    const updatedAvailable = availableGifts.filter(g => g.id !== gift.id);
+    
+    setSelectedGifts(updatedSelected);
+    setAvailableGifts(updatedAvailable);
+    
+    localStorage.setItem('selectedGifts', JSON.stringify(updatedSelected));
+    localStorage.setItem('availableGifts', JSON.stringify(updatedAvailable));
   };
 
   const returnGift = (gift) => {
-    setAvailableGifts([...availableGifts, gift]);
-    setSelectedGifts(selectedGifts.filter(g => g.id !== gift.id));
-    localStorage.setItem('availableGifts', JSON.stringify([...availableGifts, gift]));
-    localStorage.setItem('selectedGifts', JSON.stringify(selectedGifts.filter(g => g.id !== gift.id)));
+    const updatedAvailable = [...availableGifts, gift];
+    const updatedSelected = selectedGifts.filter(g => g.id !== gift.id);
+    
+    setAvailableGifts(updatedAvailable);
+    setSelectedGifts(updatedSelected);
+    
+    localStorage.setItem('availableGifts', JSON.stringify(updatedAvailable));
+    localStorage.setItem('selectedGifts', JSON.stringify(updatedSelected));
   };
 
   useEffect(() => {
@@ -51,7 +59,28 @@ const GiftList = () => {
     const savedAvailable = localStorage.getItem('availableGifts');
     
     if (savedSelected) setSelectedGifts(JSON.parse(savedSelected));
-    if (savedAvailable) setAvailableGifts(JSON.parse(savedAvailable));
+    if (savedAvailable) {
+      const available = JSON.parse(savedAvailable);
+      if (available.length > 0) {
+        setAvailableGifts(available);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'availableGifts') {
+        const available = JSON.parse(e.newValue || '[]');
+        setAvailableGifts(available);
+      }
+      if (e.key === 'selectedGifts') {
+        const selected = JSON.parse(e.newValue || '[]');
+        setSelectedGifts(selected);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   return (
@@ -164,65 +193,63 @@ const GiftList = () => {
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      )}
-
-      <div style={{ 
-        backgroundColor: '#fff',
-        borderRadius: '8px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        padding: '1.5rem',
-        height: 'fit-content'
-      }}>
-        <h2 style={{ 
-          fontSize: '1.5rem', 
-          fontWeight: 'bold',
-          color: '#2563eb',
-          marginBottom: '1.5rem',
-          textAlign: 'center'
+        )}
+        <div style={{ 
+          backgroundColor: '#fff',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          padding: '1.5rem',
+          height: 'fit-content'
         }}>
-          Presentes Disponíveis
-        </h2>
-        
-        <div style={{
-          display: 'grid',
-          gap: '1rem',
-          maxHeight: '70vh',
-          overflowY: 'auto',
-          padding: '0.5rem'
-        }}>
-          {availableGifts.map(gift => (
-            <div 
-              key={gift.id}
-              style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                padding: '1rem',
-                backgroundColor: '#f8fafc',
-                borderRadius: '6px',
-                transition: 'all 0.2s',
-                cursor: 'pointer',
-                border: '1px solid #e2e8f0'
-              }}
-              onClick={() => selectGift(gift)}
-            >
-              <span style={{ fontSize: '1rem', color: '#334155' }}>{gift.name}</span>
-              <button style={{ 
-                background: '#3b82f6',
-                color: 'white',
-                padding: '0.5rem 1rem',
-                borderRadius: '6px',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: '500',
-                transition: 'background 0.2s'
-              }}>
-                Selecionar
-              </button>
-            </div>
-          ))}
+          <h2 style={{ 
+            fontSize: '1.5rem', 
+            fontWeight: 'bold',
+            color: '#2563eb',
+            marginBottom: '1.5rem',
+            textAlign: 'center'
+          }}>
+            Presentes Disponíveis
+          </h2>
+          
+          <div style={{
+            display: 'grid',
+            gap: '1rem',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+            padding: '0.5rem'
+          }}>
+            {availableGifts.map(gift => (
+              <div 
+                key={gift.id}
+                style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  padding: '1rem',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '6px',
+                  transition: 'all 0.2s',
+                  cursor: 'pointer',
+                  border: '1px solid #e2e8f0'
+                }}
+                onClick={() => selectGift(gift)}
+              >
+                <span style={{ fontSize: '1rem', color: '#334155' }}>{gift.name}</span>
+                <button style={{ 
+                  background: '#3b82f6',
+                  color: 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  transition: 'background 0.2s'
+                }}>
+                  Selecionar
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
