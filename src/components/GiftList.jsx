@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 const GiftList = () => {
+  const [showSelected, setShowSelected] = useState(false);
   const [selectedGifts, setSelectedGifts] = useState([]);
   const [availableGifts, setAvailableGifts] = useState([
     { id: 1, name: 'Assadeiras', link: 'https://www.magazinevoce.com.br/magazineluccastorels/jogo-4-formas-assadeiras-retangulares-aluminio-p-bolos-e-tortas-postagem-rapida-mba/p/hhfghh5j8e/ud/fabo/' },
@@ -69,175 +70,159 @@ const GiftList = () => {
         Lista de Presentes
       </h1>
 
-      <div style={{ 
-        display: 'grid',
-        gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : '1fr 1fr',
-        gap: '2rem'
-      }}>
-        {/* Lista de Disponíveis */}
+      {selectedGifts.length > 0 && (
         <div style={{ 
           backgroundColor: '#fff',
           borderRadius: '8px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           padding: '1.5rem',
-          height: 'fit-content'
-        }}>
-          <h2 style={{ 
-            fontSize: '1.5rem', 
-            fontWeight: 'bold',
-            color: '#2563eb',
-            marginBottom: '1.5rem',
-            textAlign: 'center'
-          }}>
-            Presentes Disponíveis
-          </h2>
-          
-          <div style={{
-            display: 'grid',
-            gap: '1rem',
-            maxHeight: '70vh',
-            overflowY: 'auto',
-            padding: '0.5rem'
-          }}>
-            {availableGifts.map(gift => (
-              <div 
-                key={gift.id}
-                style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  padding: '1rem',
-                  backgroundColor: '#f8fafc',
-                  borderRadius: '6px',
-                  transition: 'all 0.2s',
-                  cursor: 'pointer',
-                  border: '1px solid #e2e8f0',
-                  ':hover': {
-                    backgroundColor: '#f1f5f9',
-                    transform: 'translateY(-2px)'
-                  }
-                }}
-                onClick={() => selectGift(gift)}
-              >
-                <span style={{ fontSize: '1rem', color: '#334155' }}>{gift.name}</span>
-                <button style={{ 
-                  background: '#3b82f6',
-                  color: 'white',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '6px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: '500',
-                  transition: 'background 0.2s',
-                  ':hover': {
-                    background: '#2563eb'
-                  }
-                }}>
-                  Selecionar
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Lista de Selecionados */}
-        <div style={{ 
-          backgroundColor: '#fff',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          padding: '1.5rem',
-          height: 'fit-content'
+          marginBottom: '2rem'
         }}>
           <h2 style={{ 
             fontSize: '1.5rem',
             fontWeight: 'bold',
             color: '#059669',
             marginBottom: '1.5rem',
-            textAlign: 'center'
-          }}>
-            Meus Presentes
+            textAlign: 'center',
+            cursor: 'pointer'
+          }} onClick={() => setShowSelected(!showSelected)}>
+            Minha Escolha {showSelected ? '▼' : '▶'}
           </h2>
 
-          <div style={{
-            display: 'grid',
-            gap: '1rem',
-            maxHeight: '70vh',
-            overflowY: 'auto',
-            padding: '0.5rem'
-          }}>
-            {selectedGifts.map(gift => (
-              <div 
-                key={gift.id}
-                style={{ 
-                  display: 'flex', 
-                  flexDirection: window.innerWidth <= 480 ? 'column' : 'row',
-                  justifyContent: 'space-between',
-                  alignItems: window.innerWidth <= 480 ? 'stretch' : 'center',
-                  gap: window.innerWidth <= 480 ? '0.5rem' : '0',
-                  padding: '1rem',
-                  backgroundColor: '#f0fdf4',
-                  borderRadius: '6px',
-                  border: '1px solid #dcfce7'
-                }}
-              >
-                <span style={{ 
-                  fontSize: '1rem',
-                  color: '#334155',
-                  marginBottom: window.innerWidth <= 480 ? '0.5rem' : '0'
-                }}>
-                  {gift.name}
-                </span>
-                
-                <div style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  flexDirection: window.innerWidth <= 480 ? 'column' : 'row'
-                }}>
-                  <a 
-                    href={gift.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      background: '#22c55e',
-                      color: 'white',
-                      padding: '0.5rem 1rem',
-                      borderRadius: '6px',
-                      textDecoration: 'none',
-                      textAlign: 'center',
-                      fontWeight: '500',
-                      transition: 'background 0.2s',
-                      ':hover': {
-                        background: '#16a34a'
-                      }
-                    }}
-                  >
-                    Comprar
-                  </a>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      returnGift(gift);
-                    }}
-                    style={{
-                      background: '#ef4444',
-                      color: 'white',
-                      padding: '0.5rem 1rem',
-                      borderRadius: '6px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontWeight: '500',
-                      transition: 'background 0.2s',
-                      ':hover': {
-                        background: '#dc2626'
-                      }
-                    }}
-                  >
-                    Devolver
-                  </button>
+          {showSelected && (
+            <div style={{
+              display: 'grid',
+              gap: '1rem',
+              maxHeight: '70vh',
+              overflowY: 'auto',
+              padding: '0.5rem'
+            }}>
+              {selectedGifts.map(gift => (
+                <div 
+                  key={gift.id}
+                  style={{ 
+                    display: 'flex', 
+                    flexDirection: window.innerWidth <= 480 ? 'column' : 'row',
+                    justifyContent: 'space-between',
+                    alignItems: window.innerWidth <= 480 ? 'stretch' : 'center',
+                    gap: window.innerWidth <= 480 ? '0.5rem' : '0',
+                    padding: '1rem',
+                    backgroundColor: '#f0fdf4',
+                    borderRadius: '6px',
+                    border: '1px solid #dcfce7'
+                  }}
+                >
+                  <span style={{ 
+                    fontSize: '1rem',
+                    color: '#334155',
+                    marginBottom: window.innerWidth <= 480 ? '0.5rem' : '0'
+                  }}>
+                    {gift.name}
+                  </span>
+                  
+                  <div style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                    flexDirection: window.innerWidth <= 480 ? 'column' : 'row'
+                  }}>
+                    <a 
+                      href={gift.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: '#22c55e',
+                        color: 'white',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '6px',
+                        textDecoration: 'none',
+                        textAlign: 'center',
+                        fontWeight: '500',
+                        transition: 'background 0.2s'
+                      }}
+                    >
+                      Onde Comprar
+                    </a>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        returnGift(gift);
+                      }}
+                      style={{
+                        background: '#ef4444',
+                        color: 'white',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '6px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                        transition: 'background 0.2s'
+                      }}
+                    >
+                      Devolver para lista
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ 
+        backgroundColor: '#fff',
+        borderRadius: '8px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        padding: '1.5rem',
+        height: 'fit-content'
+      }}>
+        <h2 style={{ 
+          fontSize: '1.5rem', 
+          fontWeight: 'bold',
+          color: '#2563eb',
+          marginBottom: '1.5rem',
+          textAlign: 'center'
+        }}>
+          Presentes Disponíveis
+        </h2>
+        
+        <div style={{
+          display: 'grid',
+          gap: '1rem',
+          maxHeight: '70vh',
+          overflowY: 'auto',
+          padding: '0.5rem'
+        }}>
+          {availableGifts.map(gift => (
+            <div 
+              key={gift.id}
+              style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                padding: '1rem',
+                backgroundColor: '#f8fafc',
+                borderRadius: '6px',
+                transition: 'all 0.2s',
+                cursor: 'pointer',
+                border: '1px solid #e2e8f0'
+              }}
+              onClick={() => selectGift(gift)}
+            >
+              <span style={{ fontSize: '1rem', color: '#334155' }}>{gift.name}</span>
+              <button style={{ 
+                background: '#3b82f6',
+                color: 'white',
+                padding: '0.5rem 1rem',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: '500',
+                transition: 'background 0.2s'
+              }}>
+                Selecionar
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>
