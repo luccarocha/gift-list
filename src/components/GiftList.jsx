@@ -32,63 +32,87 @@ const GiftList = () => {
     { id: 26, name: 'Varal Retrátil', link: 'https://www.magazinevoce.com.br/magazineluccastorels/varal-de-chao-com-abas-retratil-roupas-intimas-apartamento-articulado-mini-aco-branco-portatil-preto-home-utilities/p/cd7aab54k9/ud/vral/' }
   ]);
 
+  useEffect(() => {
+    const request = indexedDB.open('giftList', 1);
+    
+    request.onerror = (event) => {
+      console.error("Database error:", event.target.error);
+    };
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('gifts')) {
+        db.createObjectStore('gifts', { keyPath: 'id' });
+      }
+    };
+
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      const transaction = db.transaction(['gifts'], 'readwrite');
+      const store = transaction.objectStore('gifts');
+      
+      availableGifts.forEach(gift => {
+        store.put({...gift, selected: false});
+      });
+    };
+  }, []);
+
   const selectGift = (gift) => {
-    const updatedSelected = [...selectedGifts, gift];
-    const updatedAvailable = availableGifts.filter(g => g.id !== gift.id);
+    const request = indexedDB.open('giftList', 1);
     
-    setSelectedGifts(updatedSelected);
-    setAvailableGifts(updatedAvailable);
-    
-    localStorage.setItem('selectedGifts', JSON.stringify(updatedSelected));
-    localStorage.setItem('availableGifts', JSON.stringify(updatedAvailable));
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      const transaction = db.transaction(['gifts'], 'readwrite');
+      const store = transaction.objectStore('gifts');
+      
+      store.put({...gift, selected: true});
+      
+      setSelectedGifts([...selectedGifts, gift]);
+      setAvailableGifts(availableGifts.filter(g => g.id !== gift.id));
+    };
   };
 
   const returnGift = (gift) => {
-    const updatedAvailable = [...availableGifts, gift].sort((a, b) => a.id - b.id);
-    const updatedSelected = selectedGifts.filter(g => g.id !== gift.id);
+    const request = indexedDB.open('giftList', 1);
     
-    setAvailableGifts(updatedAvailable);
-    setSelectedGifts(updatedSelected);
-    
-    localStorage.setItem('availableGifts', JSON.stringify(updatedAvailable));
-    localStorage.setItem('selectedGifts', JSON.stringify(updatedSelected));
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      const transaction = db.transaction(['gifts'], 'readwrite');
+      const store = transaction.objectStore('gifts');
+      
+      store.put({...gift, selected: false});
+      
+      setAvailableGifts([...availableGifts, gift].sort((a, b) => a.id - b.id));
+      setSelectedGifts(selectedGifts.filter(g => g.id !== gift.id));
+    };
   };
 
-  // Load initial data
   useEffect(() => {
-    const savedSelected = localStorage.getItem('selectedGifts');
-    const savedAvailable = localStorage.getItem('availableGifts');
-    
-    if (savedSelected) setSelectedGifts(JSON.parse(savedSelected));
-    if (savedAvailable) {
-      const available = JSON.parse(savedAvailable);
-      if (available.length > 0) {
-        setAvailableGifts(available);
-      }
-    }
-  }, []);
-
-  // Poll for changes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const currentAvailable = localStorage.getItem('availableGifts');
-      const currentSelected = localStorage.getItem('selectedGifts');
+    const checkForUpdates = () => {
+      const request = indexedDB.open('giftList', 1);
       
-      if (currentAvailable) {
-        const parsedAvailable = JSON.parse(currentAvailable);
-        if (JSON.stringify(parsedAvailable) !== JSON.stringify(availableGifts)) {
-          setAvailableGifts(parsedAvailable);
-        }
-      }
-      
-      if (currentSelected) {
-        const parsedSelected = JSON.parse(currentSelected);
-        if (JSON.stringify(parsedSelected) !== JSON.stringify(selectedGifts)) {
-          setSelectedGifts(parsedSelected);
-        }
-      }
-    }, 1000); // Check every second
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction(['gifts'], 'readonly');
+        const store = transaction.objectStore('gifts');
+        const getAll = store.getAll();
+        
+        getAll.onsuccess = () => {
+          const gifts = getAll.result;
+          const available = gifts.filter(g => !g.selected);
+          const selected = gifts.filter(g => g.selected);
+          
+          if (JSON.stringify(available) !== JSON.stringify(availableGifts)) {
+            setAvailableGifts(available);
+          }
+          if (JSON.stringify(selected) !== JSON.stringify(selectedGifts)) {
+            setSelectedGifts(selected);
+          }
+        };
+      };
+    };
 
+    const interval = setInterval(checkForUpdates, 500);
     return () => clearInterval(interval);
   }, [availableGifts, selectedGifts]);
 
@@ -167,8 +191,7 @@ const GiftList = () => {
                       href={gift.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{
-                        background: '#22c55e',
+                      style={{background: '#22c55e',
                         color: 'white',
                         padding: '0.5rem 1rem',
                         borderRadius: '6px',
@@ -188,7 +211,8 @@ const GiftList = () => {
                       style={{
                         background: '#ef4444',
                         color: 'white',
-                        padding: '0.5rem 1rem',borderRadius: '6px',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '6px',
                         border: 'none',
                         cursor: 'pointer',
                         fontWeight: '500',
