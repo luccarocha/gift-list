@@ -1,10 +1,8 @@
-import GiftList from './components/GiftList'
-
 function App() {
   return (
-    <div>
+    <div style={{padding: '20px'}}>
       <h1>Lista de Presentes</h1>
-      <GiftList />
+      <p>Teste</p>
     </div>
   )
 }
