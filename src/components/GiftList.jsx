@@ -46,24 +46,8 @@ const GiftList = () => {
 
   const selectGift = async (gift) => {
     try {
-      // Log detalhado
-      console.log('Tentando selecionar presente:', gift);
-
-      // Remove do available
-      const deleteResponse = await fetch(`${API_URL}/gifts/${gift.id}`, {
-        method: 'DELETE'
-      });
-
-      console.log('Resposta DELETE:', deleteResponse);
-
-      if (!deleteResponse.ok) {
-        const errorBody = await deleteResponse.text();
-        console.error('Corpo do erro DELETE:', errorBody);
-        throw new Error(`Falha ao remover presente: ${deleteResponse.status} ${deleteResponse.statusText}`);
-      }
-
       // Adiciona ao selected
-      const addResponse = await fetch(`${API_URL}/selectedGifts`, {
+      const selectResponse = await fetch(`${API_URL}/selectGift`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -71,12 +55,9 @@ const GiftList = () => {
         body: JSON.stringify(gift)
       });
 
-      console.log('Resposta POST:', addResponse);
-
-      if (!addResponse.ok) {
-        const errorBody = await addResponse.text();
-        console.error('Corpo do erro POST:', errorBody);
-        throw new Error(`Falha ao adicionar presente selecionado: ${addResponse.status} ${addResponse.statusText}`);
+      if (!selectResponse.ok) {
+        const errorBody = await selectResponse.text();
+        throw new Error(`Falha ao selecionar presente: ${selectResponse.status} ${errorBody}`);
       }
 
       // Atualiza os estados localmente
@@ -86,24 +67,15 @@ const GiftList = () => {
       // Limpa qualquer erro anterior
       setError(null);
     } catch (error) {
-      console.error('Erro detalhado ao selecionar presente:', error);
+      console.error('Erro ao selecionar presente:', error);
       setError(`Erro ao selecionar presente: ${error.message}`);
     }
   };
 
   const returnGift = async (gift) => {
     try {
-      // Remove do selected
-      const deleteResponse = await fetch(`${API_URL}/selectedGifts/${gift.id}`, {
-        method: 'DELETE'
-      });
-
-      if (!deleteResponse.ok) {
-        throw new Error('Falha ao remover presente selecionado');
-      }
-
-      // Adiciona de volta ao available
-      const addResponse = await fetch(`${API_URL}/gifts`, {
+      // Retorna o presente para a lista disponível
+      const returnResponse = await fetch(`${API_URL}/returnGift`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -111,8 +83,9 @@ const GiftList = () => {
         body: JSON.stringify(gift)
       });
 
-      if (!addResponse.ok) {
-        throw new Error('Falha ao adicionar presente de volta');
+      if (!returnResponse.ok) {
+        const errorBody = await returnResponse.text();
+        throw new Error(`Falha ao devolver presente: ${returnResponse.status} ${errorBody}`);
       }
 
       // Atualiza os estados localmente
@@ -122,7 +95,7 @@ const GiftList = () => {
       // Limpa qualquer erro anterior
       setError(null);
     } catch (error) {
-      console.error('Error returning gift:', error);
+      console.error('Erro ao devolver presente:', error);
       setError(`Erro ao devolver presente: ${error.message}`);
     }
   };
