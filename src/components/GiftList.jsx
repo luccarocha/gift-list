@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const API_URL = 'https://gift-list-backend.onrender.com'; 
+const API_URL = 'https://gift-list-backend.onrender.com/api'; 
 
 const GiftList = () => {
   const [selectedGifts, setSelectedGifts] = useState([]);
