@@ -3,21 +3,41 @@ import React, { useState, useEffect } from 'react';
 const API_URL = 'https://gift-list-backend.onrender.com'; 
 
 const GiftList = () => {
+  const [sessionId, setSessionId] = useState(null);
   const [selectedGifts, setSelectedGifts] = useState([]);
   const [showSelected, setShowSelected] = useState(false);
   const [availableGifts, setAvailableGifts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Carrega dados iniciais
+  // Obtém o ID da sessão
   useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const response = await fetch(`${API_URL}/session`);
+        const data = await response.json();
+        setSessionId(data.sessionId);
+      } catch (error) {
+        console.error('Erro ao obter sessão:', error);
+        setError('Não foi possível iniciar a sessão.');
+      }
+    };
+
+    fetchSession();
+  }, []);
+
+  // Carrega presentes quando a sessão é criada
+  useEffect(() => {
+    if (!sessionId) return;
+
     const fetchGifts = async () => {
       try {
         setIsLoading(true);
         setError(null);
+
         const [giftsRes, selectedRes] = await Promise.all([
-          fetch(`${API_URL}/gifts`),
-          fetch(`${API_URL}/selectedGifts`)
+          fetch(`${API_URL}/gifts?sessionId=${sessionId}`),
+          fetch(`${API_URL}/selectedGifts?sessionId=${sessionId}`)
         ]);
         
         if (!giftsRes.ok || !selectedRes.ok) {
@@ -42,61 +62,67 @@ const GiftList = () => {
     // Atualiza a cada 5 segundos
     const interval = setInterval(fetchGifts, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [sessionId]);
 
   const selectGift = async (gift) => {
+    if (!sessionId) {
+      setError('Sessão não iniciada. Recarregue a página.');
+      return;
+    }
+
     try {
-      // Adiciona ao selected
-      const selectResponse = await fetch(`${API_URL}/selectGift`, {
+      const response = await fetch(`${API_URL}/selectGift`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(gift)
+        body: JSON.stringify({ gift, sessionId })
       });
 
-      if (!selectResponse.ok) {
-        const errorBody = await selectResponse.text();
-        throw new Error(`Falha ao selecionar presente: ${selectResponse.status} ${errorBody}`);
-      }
-
-      // Atualiza os estados localmente
-      setSelectedGifts(prev => [...prev, gift]);
-      setAvailableGifts(prev => prev.filter(g => g.id !== gift.id));
+      const data = await response.json();
       
-      // Limpa qualquer erro anterior
-      setError(null);
+      if (data.success) {
+        // Atualiza os estados localmente
+        setSelectedGifts(prev => [...prev, gift]);
+        setAvailableGifts(prev => prev.filter(g => g=> g.id !== gift.id));
+        setError(null);
+      } else {
+        setError(data.message || 'Erro ao selecionar presente');
+      }
     } catch (error) {
       console.error('Erro ao selecionar presente:', error);
-      setError(`Erro ao selecionar presente: ${error.message}`);
+      setError('Não foi possível selecionar o presente. Tente novamente.');
     }
   };
 
   const returnGift = async (gift) => {
+    if (!sessionId) {
+      setError('Sessão não iniciada. Recarregue a página.');
+      return;
+    }
+
     try {
-      // Retorna o presente para a lista disponível
-      const returnResponse = await fetch(`${API_URL}/returnGift`, {
+      const response = await fetch(`${API_URL}/returnGift`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(gift)
+        body: JSON.stringify({ gift, sessionId })
       });
 
-      if (!returnResponse.ok) {
-        const errorBody = await returnResponse.text();
-        throw new Error(`Falha ao devolver presente: ${returnResponse.status} ${errorBody}`);
-      }
-
-      // Atualiza os estados localmente
-      setAvailableGifts(prev => [...prev, gift].sort((a, b) => a.id - b.id));
-      setSelectedGifts(prev => prev.filter(g => g.id !== gift.id));
+      const data = await response.json();
       
-      // Limpa qualquer erro anterior
-      setError(null);
+      if (data.success) {
+        // Atualiza os estados localmente
+        setAvailableGifts(prev => [...prev, gift].sort((a, b) => a.id - b.id));
+        setSelectedGifts(prev => prev.filter(g => g.id !== gift.id));
+        setError(null);
+      } else {
+        setError('Erro ao devolver presente');
+      }
     } catch (error) {
       console.error('Erro ao devolver presente:', error);
-      setError(`Erro ao devolver presente: ${error.message}`);
+      setError('Não foi possível devolver o presente. Tente novamente.');
     }
   };
 
