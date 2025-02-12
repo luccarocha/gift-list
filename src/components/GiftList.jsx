@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const API_URL = 'https://gift-list-backend.onrender.com'; 
 
@@ -6,11 +6,13 @@ const GiftList = () => {
   const [selectedGifts, setSelectedGifts] = useState([]);
   const [showSelected, setShowSelected] = useState(false);
   const [availableGifts, setAvailableGifts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Carrega dados iniciais
   useEffect(() => {
     const fetchGifts = async () => {
       try {
+        setIsLoading(true);
         const [giftsRes, selectedRes] = await Promise.all([
           fetch(`${API_URL}/gifts`),
           fetch(`${API_URL}/selectedGifts`)
@@ -21,8 +23,10 @@ const GiftList = () => {
         
         setAvailableGifts(gifts);
         setSelectedGifts(selected);
+        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching gifts:', error);
+        setIsLoading(false);
       }
     };
 
@@ -36,12 +40,16 @@ const GiftList = () => {
   const selectGift = async (gift) => {
     try {
       // Remove do available
-      await fetch(`${API_URL}/gifts/${gift.id}`, {
+      const deleteResponse = await fetch(`${API_URL}/gifts/${gift.id}`, {
         method: 'DELETE'
       });
 
+      if (!deleteResponse.ok) {
+        throw new Error('Falha ao remover presente');
+      }
+
       // Adiciona ao selected
-      await fetch(`${API_URL}/selectedGifts`, {
+      const addResponse = await fetch(`${API_URL}/selectedGifts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -49,22 +57,33 @@ const GiftList = () => {
         body: JSON.stringify(gift)
       });
 
-      setSelectedGifts([...selectedGifts, gift]);
-      setAvailableGifts(availableGifts.filter(g => g.id !== gift.id));
+      if (!addResponse.ok) {
+        throw new Error('Falha ao adicionar presente selecionado');
+      }
+
+      // Atualiza os estados localmente
+      setSelectedGifts(prev => [...prev, gift]);
+      setAvailableGifts(prev => prev.filter(g => g.id !== gift.id));
     } catch (error) {
       console.error('Error selecting gift:', error);
+      // Opcional: Adicionar feedback de erro para o usuário
+      alert('Erro ao selecionar presente. Tente novamente.');
     }
   };
 
   const returnGift = async (gift) => {
     try {
       // Remove do selected
-      await fetch(`${API_URL}/selectedGifts/${gift.id}`, {
+      const deleteResponse = await fetch(`${API_URL}/selectedGifts/${gift.id}`, {
         method: 'DELETE'
       });
 
+      if (!deleteResponse.ok) {
+        throw new Error('Falha ao remover presente selecionado');
+      }
+
       // Adiciona de volta ao available
-      await fetch(`${API_URL}/gifts`, {
+      const addResponse = await fetch(`${API_URL}/gifts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -72,14 +91,35 @@ const GiftList = () => {
         body: JSON.stringify(gift)
       });
 
-      setAvailableGifts([...availableGifts, gift].sort((a, b) => a.id - b.id));
-      setSelectedGifts(selectedGifts.filter(g => g.id !== gift.id));
+      if (!addResponse.ok) {
+        throw new Error('Falha ao adicionar presente de volta');
+      }
+
+      // Atualiza os estados localmente
+      setAvailableGifts(prev => [...prev, gift].sort((a, b) => a.id - b.id));
+      setSelectedGifts(prev => prev.filter(g => g.id !== gift.id));
     } catch (error) {
       console.error('Error returning gift:', error);
+      // Opcional: Adicionar feedback de erro para o usuário
+      alert('Erro ao devolver presente. Tente novamente.');
     }
   };
 
-  // JSX permanece o mesmo
+  // Componente de carregamento
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontFamily: 'Arial, sans-serif'
+      }}>
+        Carregando presentes...
+      </div>
+    );
+  }
+
   return (
     <div style={{ 
       maxWidth: '1200px', 
@@ -211,45 +251,64 @@ const GiftList = () => {
           Presentes Disponíveis
         </h2>
         
-        <div style={{
-          display: 'grid',
-          gap: '1rem',
-          maxHeight: '70vh',
-          overflowY: 'auto',
-          padding: '0.5rem'
-        }}>
-          {availableGifts.map(gift => (
-            <div 
-              key={gift.id}
-              style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                padding: '1rem',
-                backgroundColor: '#f8fafc',
-                borderRadius: '6px',
-                transition: 'all 0.2s',
-                cursor: 'pointer',
-                border: '1px solid #e2e8f0'
-              }}
-              onClick={() => selectGift(gift)}
-            >
-              <span style={{ fontSize: '1rem', color: '#334155' }}>{gift.name}</span>
-              <button style={{ 
-                background: '#3b82f6',
-                color: 'white',
-                padding: '0.5rem 1rem',
-                borderRadius: '6px',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: '500',
-                transition: 'background 0.2s'
-              }}>
-                Selecionar
-              </button>
-            </div>
-          ))}
-        </div>
+        {availableGifts.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            color: '#718096',
+            padding: '2rem'
+          }}>
+            Não há presentes disponíveis no momento.
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gap: '1rem',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+            padding: '0.5rem'
+          }}>
+            {availableGifts.map(gift => (
+              <div 
+                key={gift.id}
+                style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  padding: '1rem',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '6px',
+                  transition: 'all 0.2s',
+                  cursor: 'pointer',
+                  border: '1px solid #e2e8f0'
+                }}
+                onClick={(e) => {
+                  e.preventDefault(); // Previne qualquer comportamento padrão
+                  selectGift(gift);
+                }}
+              >
+                <span style={{ fontSize: '1rem', color: '#334155' }}>{gift.name}</span>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Impede que o evento de clique da div seja acionado
+                    selectGift(gift);
+                  }}
+                  style={{ 
+                    background: '#3b82f6',
+                    color: 'white',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '6px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    transition: 'background 0.2s'
+                  }}
+                >
+                  Selecionar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
