@@ -7,17 +7,23 @@ const GiftList = () => {
   const [showSelected, setShowSelected] = useState(false);
   const [availableGifts, setAvailableGifts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Carrega dados iniciais
   useEffect(() => {
     const fetchGifts = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const [giftsRes, selectedRes] = await Promise.all([
           fetch(`${API_URL}/gifts`),
           fetch(`${API_URL}/selectedGifts`)
         ]);
         
+        if (!giftsRes.ok || !selectedRes.ok) {
+          throw new Error('Falha ao carregar presentes');
+        }
+
         const gifts = await giftsRes.json();
         const selected = await selectedRes.json();
         
@@ -26,6 +32,7 @@ const GiftList = () => {
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching gifts:', error);
+        setError('Não foi possível carregar os presentes. Tente novamente.');
         setIsLoading(false);
       }
     };
@@ -39,13 +46,20 @@ const GiftList = () => {
 
   const selectGift = async (gift) => {
     try {
+      // Log detalhado
+      console.log('Tentando selecionar presente:', gift);
+
       // Remove do available
       const deleteResponse = await fetch(`${API_URL}/gifts/${gift.id}`, {
         method: 'DELETE'
       });
 
+      console.log('Resposta DELETE:', deleteResponse);
+
       if (!deleteResponse.ok) {
-        throw new Error('Falha ao remover presente');
+        const errorBody = await deleteResponse.text();
+        console.error('Corpo do erro DELETE:', errorBody);
+        throw new Error(`Falha ao remover presente: ${deleteResponse.status} ${deleteResponse.statusText}`);
       }
 
       // Adiciona ao selected
@@ -57,17 +71,23 @@ const GiftList = () => {
         body: JSON.stringify(gift)
       });
 
+      console.log('Resposta POST:', addResponse);
+
       if (!addResponse.ok) {
-        throw new Error('Falha ao adicionar presente selecionado');
+        const errorBody = await addResponse.text();
+        console.error('Corpo do erro POST:', errorBody);
+        throw new Error(`Falha ao adicionar presente selecionado: ${addResponse.status} ${addResponse.statusText}`);
       }
 
       // Atualiza os estados localmente
       setSelectedGifts(prev => [...prev, gift]);
       setAvailableGifts(prev => prev.filter(g => g.id !== gift.id));
+      
+      // Limpa qualquer erro anterior
+      setError(null);
     } catch (error) {
-      console.error('Error selecting gift:', error);
-      // Opcional: Adicionar feedback de erro para o usuário
-      alert('Erro ao selecionar presente. Tente novamente.');
+      console.error('Erro detalhado ao selecionar presente:', error);
+      setError(`Erro ao selecionar presente: ${error.message}`);
     }
   };
 
@@ -98,10 +118,12 @@ const GiftList = () => {
       // Atualiza os estados localmente
       setAvailableGifts(prev => [...prev, gift].sort((a, b) => a.id - b.id));
       setSelectedGifts(prev => prev.filter(g => g.id !== gift.id));
+      
+      // Limpa qualquer erro anterior
+      setError(null);
     } catch (error) {
       console.error('Error returning gift:', error);
-      // Opcional: Adicionar feedback de erro para o usuário
-      alert('Erro ao devolver presente. Tente novamente.');
+      setError(`Erro ao devolver presente: ${error.message}`);
     }
   };
 
@@ -127,6 +149,20 @@ const GiftList = () => {
       padding: '1rem',
       fontFamily: 'Arial, sans-serif'
     }}>
+      {/* Componente de erro */}
+      {error && (
+        <div style={{
+          backgroundColor: '#FEE2E2',
+          color: '#991B1B',
+          padding: '1rem',
+          marginBottom: '1rem',
+          borderRadius: '8px',
+          textAlign: 'center'
+        }}>
+          {error}
+        </div>
+      )}
+
       <h1 style={{
         textAlign: 'center',
         fontSize: '2rem',
