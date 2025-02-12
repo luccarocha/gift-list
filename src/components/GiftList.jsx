@@ -12,13 +12,27 @@ const GiftList = () => {
 
   // Obtém o ID da sessão
   const fetchSession = useCallback(async () => {
+    // Tenta obter sessão do localStorage primeiro
+    const storedSessionId = localStorage.getItem('giftListSessionId');
+    
+    if (storedSessionId) {
+      setSessionId(storedSessionId);
+      return storedSessionId;
+    }
+
     try {
       const response = await fetch(`${API_URL}/session`);
       const data = await response.json();
+      
+      // Salva a sessão no localStorage
+      localStorage.setItem('giftListSessionId', data.sessionId);
       setSessionId(data.sessionId);
+      
+      return data.sessionId;
     } catch (error) {
       console.error('Erro ao obter sessão:', error);
       setError('Não foi possível iniciar a sessão.');
+      return null;
     }
   }, []);
 
@@ -40,12 +54,10 @@ const GiftList = () => {
       const selected = await selectedRes.json();
       
       setAvailableGifts(prevGifts => {
-        // Só atualiza se houver mudança
         return JSON.stringify(prevGifts) !== JSON.stringify(gifts) ? gifts : prevGifts;
       });
       
       setSelectedGifts(prevSelected => {
-        // Só atualiza se houver mudança
         return JSON.stringify(prevSelected) !== JSON.stringify(selected) ? selected : prevSelected;
       });
       
@@ -66,12 +78,14 @@ const GiftList = () => {
 
   // Efeito para carregar presentes
   useEffect(() => {
-    fetchGifts();
-    
-    // Atualiza a cada 5 segundos
-    const interval = setInterval(fetchGifts, 5000);
-    return () => clearInterval(interval);
-  }, [fetchGifts]);
+    if (sessionId) {
+      fetchGifts();
+      
+      // Atualiza a cada 5 segundos
+      const interval = setInterval(fetchGifts, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchGifts, sessionId]);
 
   const selectGift = async (gift) => {
     if (!sessionId) {
