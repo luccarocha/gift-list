@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const API_URL = 'https://gift-list-backend.onrender.com'; 
 
@@ -7,62 +7,72 @@ const GiftList = () => {
   const [selectedGifts, setSelectedGifts] = useState([]);
   const [showSelected, setShowSelected] = useState(false);
   const [availableGifts, setAvailableGifts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState(null);
 
   // Obtém o ID da sessão
-  useEffect(() => {
-    const fetchSession = async () => {
-      try {
-        const response = await fetch(`${API_URL}/session`);
-        const data = await response.json();
-        setSessionId(data.sessionId);
-      } catch (error) {
-        console.error('Erro ao obter sessão:', error);
-        setError('Não foi possível iniciar a sessão.');
-      }
-    };
-
-    fetchSession();
+  const fetchSession = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/session`);
+      const data = await response.json();
+      setSessionId(data.sessionId);
+    } catch (error) {
+      console.error('Erro ao obter sessão:', error);
+      setError('Não foi possível iniciar a sessão.');
+    }
   }, []);
 
   // Carrega presentes quando a sessão é criada
-  useEffect(() => {
+  const fetchGifts = useCallback(async () => {
     if (!sessionId) return;
 
-    const fetchGifts = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const [giftsRes, selectedRes] = await Promise.all([
-          fetch(`${API_URL}/gifts?sessionId=${sessionId}`),
-          fetch(`${API_URL}/selectedGifts?sessionId=${sessionId}`)
-        ]);
-        
-        if (!giftsRes.ok || !selectedRes.ok) {
-          throw new Error('Falha ao carregar presentes');
-        }
-
-        const gifts = await giftsRes.json();
-        const selected = await selectedRes.json();
-        
-        setAvailableGifts(gifts);
-        setSelectedGifts(selected);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching gifts:', error);
-        setError('Não foi possível carregar os presentes. Tente novamente.');
-        setIsLoading(false);
+    try {
+      // Para atualizações subsequentes, não mostre o estado de carregamento inicial
+      if (!isInitialLoading) {
+        setIsUpdating(true);
       }
-    };
 
+      const [giftsRes, selectedRes] = await Promise.all([
+        fetch(`${API_URL}/gifts?sessionId=${sessionId}`),
+        fetch(`${API_URL}/selectedGifts?sessionId=${sessionId}`)
+      ]);
+      
+      if (!giftsRes.ok || !selectedRes.ok) {
+        throw new Error('Falha ao carregar presentes');
+      }
+
+      const gifts = await giftsRes.json();
+      const selected = await selectedRes.json();
+      
+      setAvailableGifts(gifts);
+      setSelectedGifts(selected);
+      
+      // Limpa estados de carregamento
+      setIsInitialLoading(false);
+      setIsUpdating(false);
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching gifts:', error);
+      setError('Não foi possível carregar os presentes. Tente novamente.');
+      setIsInitialLoading(false);
+      setIsUpdating(false);
+    }
+  }, [sessionId, isInitialLoading]);
+
+  // Efeito para buscar sessão inicial
+  useEffect(() => {
+    fetchSession();
+  }, [fetchSession]);
+
+  // Efeito para carregar presentes
+  useEffect(() => {
     fetchGifts();
     
     // Atualiza a cada 5 segundos
     const interval = setInterval(fetchGifts, 5000);
     return () => clearInterval(interval);
-  }, [sessionId]);
+  }, [fetchGifts]);
 
   const selectGift = async (gift) => {
     if (!sessionId) {
@@ -84,7 +94,7 @@ const GiftList = () => {
       if (data.success) {
         // Atualiza os estados localmente
         setSelectedGifts(prev => [...prev, gift]);
-        setAvailableGifts(prev => prev.filter(g => g=> g.id !== gift.id));
+        setAvailableGifts(prev => prev.filter(g => g.id !== gift.id));
         setError(null);
       } else {
         setError(data.message || 'Erro ao selecionar presente');
@@ -126,8 +136,8 @@ const GiftList = () => {
     }
   };
 
-  // Componente de carregamento
-  if (isLoading) {
+  // Componente de carregamento inicial
+  if (isInitialLoading) {
     return (
       <div style={{ 
         display: 'flex', 
@@ -146,8 +156,35 @@ const GiftList = () => {
       maxWidth: '1200px', 
       margin: '0 auto', 
       padding: '1rem',
-      fontFamily: 'Arial, sans-serif'
+      fontFamily: 'Arial, sans-serif',
+      position: 'relative' // Para posicionamento do overlay de atualização
     }}>
+      {/* Overlay de atualização */}
+      {isUpdating && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(255, 255, 255, 0.7)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10,
+          pointerEvents: 'none' // Permite interação com os elementos por baixo
+        }}>
+          <div style={{
+            backgroundColor: '#f0f0f0',
+            padding: '10px 20px',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            Atualizando...
+          </div>
+        </div>
+      )}
+
       {/* Componente de erro */}
       {error && (
         <div style={{
