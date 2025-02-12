@@ -8,7 +8,6 @@ const GiftList = () => {
   const [showSelected, setShowSelected] = useState(false);
   const [availableGifts, setAvailableGifts] = useState([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState(null);
 
   // Obtém o ID da sessão
@@ -28,11 +27,6 @@ const GiftList = () => {
     if (!sessionId) return;
 
     try {
-      // Para atualizações subsequentes, não mostre o estado de carregamento inicial
-      if (!isInitialLoading) {
-        setIsUpdating(true);
-      }
-
       const [giftsRes, selectedRes] = await Promise.all([
         fetch(`${API_URL}/gifts?sessionId=${sessionId}`),
         fetch(`${API_URL}/selectedGifts?sessionId=${sessionId}`)
@@ -45,20 +39,25 @@ const GiftList = () => {
       const gifts = await giftsRes.json();
       const selected = await selectedRes.json();
       
-      setAvailableGifts(gifts);
-      setSelectedGifts(selected);
+      setAvailableGifts(prevGifts => {
+        // Só atualiza se houver mudança
+        return JSON.stringify(prevGifts) !== JSON.stringify(gifts) ? gifts : prevGifts;
+      });
+      
+      setSelectedGifts(prevSelected => {
+        // Só atualiza se houver mudança
+        return JSON.stringify(prevSelected) !== JSON.stringify(selected) ? selected : prevSelected;
+      });
       
       // Limpa estados de carregamento
       setIsInitialLoading(false);
-      setIsUpdating(false);
       setError(null);
     } catch (error) {
       console.error('Error fetching gifts:', error);
       setError('Não foi possível carregar os presentes. Tente novamente.');
       setIsInitialLoading(false);
-      setIsUpdating(false);
     }
-  }, [sessionId, isInitialLoading]);
+  }, [sessionId]);
 
   // Efeito para buscar sessão inicial
   useEffect(() => {
@@ -92,7 +91,7 @@ const GiftList = () => {
       const data = await response.json();
       
       if (data.success) {
-        // Atualiza os estados localmente
+        // Atualiza os estados localmente de forma otimista
         setSelectedGifts(prev => [...prev, gift]);
         setAvailableGifts(prev => prev.filter(g => g.id !== gift.id));
         setError(null);
@@ -123,7 +122,7 @@ const GiftList = () => {
       const data = await response.json();
       
       if (data.success) {
-        // Atualiza os estados localmente
+        // Atualiza os estados localmente de forma otimista
         setAvailableGifts(prev => [...prev, gift].sort((a, b) => a.id - b.id));
         setSelectedGifts(prev => prev.filter(g => g.id !== gift.id));
         setError(null);
@@ -156,35 +155,8 @@ const GiftList = () => {
       maxWidth: '1200px', 
       margin: '0 auto', 
       padding: '1rem',
-      fontFamily: 'Arial, sans-serif',
-      position: 'relative' // Para posicionamento do overlay de atualização
+      fontFamily: 'Arial, sans-serif'
     }}>
-      {/* Overlay de atualização */}
-      {isUpdating && (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(255, 255, 255, 0.7)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 10,
-          pointerEvents: 'none' // Permite interação com os elementos por baixo
-        }}>
-          <div style={{
-            backgroundColor: '#f0f0f0',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            Atualizando...
-          </div>
-        </div>
-      )}
-
       {/* Componente de erro */}
       {error && (
         <div style={{
